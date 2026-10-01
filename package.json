@@ -1,6 +1,6 @@
 {
   "name": "rrsp-tfsa-lab",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "type": "module",
   "description": "A transparent, local-only Ontario RRSP / TFSA scenario explorer",

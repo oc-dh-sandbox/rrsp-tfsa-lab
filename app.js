@@ -1,5 +1,6 @@
-import { VERSION, DEFAULTS, BOUNDS, normalize, PORTFOLIOS, STRATEGIES } from './data.js?v=1.1.0';
-import { matchFeeCrossover } from './model.js';
+import { VERSION, DEFAULTS, BOUNDS, normalize, PORTFOLIOS, STRATEGIES } from './data.js?v=1.1.1';
+import { calculate, matchFeeCrossover } from './model.js';
+import { createCalculationRunner } from './calculation-runner.js?v=1.1.1';
 
 const $ = id => document.getElementById(id);
 const money = n => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
@@ -14,8 +15,12 @@ const STORIES = [
   { id: 'rrsp', label: 'WS RRSP', next: 'a low-fee RRSP', chapter: 'TRY THE OTHER ACCOUNT', title: 'A low-fee RRSP instead?', description: 'Use a Wealthsimple RRSP, without the employer match. Reinvest the tax savings too.' },
   { id: 'hybridRRSP', label: 'Split + RRSP', next: 'match + RRSP', chapter: 'THE OTHER WAY TO SPLIT', title: 'Match first. Low-fee RRSP next.', description: 'Capture eligible matching at Sun Life; put extra RRSP contributions at Wealthsimple.' }
 ];
-let settings = { ...DEFAULTS }, result = null, worker = null, job = 0, timer = null, saved = false;
+let settings = { ...DEFAULTS }, result = null, timer = null, saved = false, phase = 'pending';
 let showRange = false;
+const calculator = createCalculationRunner({
+  createWorker: () => typeof Worker === 'undefined' ? null : new Worker(new URL(`./worker.js?v=${VERSION}`, import.meta.url), { type: 'module' }),
+  calculate, onResult: receive, onError: fail
+});
 let initialWarning = '';
 try {
   const item = localStorage.getItem(STORAGE);
@@ -64,51 +69,62 @@ function persist() {
 }
 function queue() {
   clearTimeout(timer);
-  ++job;
-  if (worker) { worker.terminate(); worker = null; }
+  calculator.cancel();
+  phase = 'pending';
   settings = normalize(settings);
   persist();
   $('results').setAttribute('aria-busy', 'true');
+  $('results').dataset.calculationState = phase;
+  $('load-error').hidden = true;
+  $('calculation-progress').hidden = false;
+  $('calculation-progress').textContent = result ? 'Updating… The previous illustration is shown until this finishes.' : 'Preparing your illustration…';
+  $('hood-value').textContent = 'Updating…';
+  $('share-box').hidden = true;
   $('status').textContent = 'Recalculating 2,000 shared market paths…';
   for (const id of ['export-csv', 'share', 'print']) $(id).disabled = true;
-  timer = setTimeout(recalculate, 160);
+  timer = setTimeout(() => calculator.start(settings), 160);
 }
 function fail(error) {
-  $('load-error').hidden = false;
-  $('load-error').textContent = `The calculation could not finish. Try reloading. ${error.message || error}`;
+  clearTimeout(timer);
+  calculator.cancel();
+  phase = 'failed';
+  result = null;
+  console.error('The Long View: scenario calculation or rendering failed.', error);
+  const focusWasInResults = $('results').contains(document.activeElement);
+  $('results').hidden = true;
   $('results').setAttribute('aria-busy', 'false');
-  $('status').textContent = 'Calculation unavailable. Any earlier results are out of date.';
-}
-async function recalculate() {
-  const id = job;
-  if (worker) worker.terminate();
-  try {
-    if (typeof Worker !== 'undefined') {
-      worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
-      worker.onmessage = ({ data }) => {
-        if (data.id !== job) return;
-        if (data.error) fail(data.error); else receive(data.result);
-      };
-      worker.onerror = event => fail(event.message || 'Browser worker error');
-      worker.postMessage({ id, settings });
-    } else {
-      const { calculate } = await import('./model.js');
-      receive(calculate(settings));
-    }
-  } catch (error) { fail(error); }
+  $('results').dataset.calculationState = phase;
+  $('load-error').hidden = false;
+  $('calculation-progress').hidden = true;
+  $('hood-value').textContent = 'Unavailable';
+  $('status').textContent = 'Calculation unavailable. Earlier results are hidden; your inputs are unchanged.';
+  $('share-box').hidden = true;
+  for (const id of ['export-csv', 'share', 'print']) $(id).disabled = true;
+  if (focusWasInResults) $('retry-calculation').focus();
 }
 function receive(data) {
-  result = data;
-  render();
+  try {
+    result = data;
+    render();
+    $('status').textContent = `Updated · ${data.paths.toLocaleString()} paired paths · select a route to explore its range and tax details.`;
+  } catch (error) { fail(error); return; }
+  phase = 'ready';
+  $('results').hidden = false;
   $('results').setAttribute('aria-busy', 'false');
-  $('status').textContent = `Updated · ${data.paths.toLocaleString()} paired paths · select a route to explore its range and tax details.`;
+  $('results').dataset.calculationState = phase;
   $('load-error').hidden = true;
+  $('calculation-progress').hidden = true;
   for (const id of ['export-csv', 'share', 'print']) $(id).disabled = false;
+}
+function redraw() {
+  if (!result || phase !== 'ready') return false;
+  try { render(); return true; }
+  catch (error) { fail(error); return false; }
 }
 function setFocus(id, returnToChart = false) {
   if (!STRATEGIES.some(s => s.id === id)) return;
   settings.focus = id; persist();
-  if (result) render();
+  if (!redraw()) return;
   const index = STORIES.findIndex(st => st.id === id);
   $('status').textContent = `Step ${index + 1} of ${STORIES.length}. ${STORIES[index].title}`;
   if (returnToChart) {
@@ -304,7 +320,8 @@ document.addEventListener('click', e => {
   if (fee) { settings.sunFee = Number(fee.dataset.fee); syncControls(); queue(); }
 });
 $('resample').addEventListener('click', () => { settings.seed = settings.seed >= 4294967295 ? 1 : settings.seed + 1; queue(); });
-$('range-toggle').addEventListener('click', () => { showRange = !showRange; if (result) render(); });
+$('retry-calculation').addEventListener('click', queue);
+$('range-toggle').addEventListener('click', () => { showRange = !showRange; redraw(); });
 $('previous').addEventListener('click', () => { const i = STORIES.findIndex(s => s.id === settings.focus); if (i > 0) setFocus(STORIES[i - 1].id, true); });
 $('next').addEventListener('click', () => { const i = STORIES.findIndex(s => s.id === settings.focus); setFocus(STORIES[(i + 1) % STORIES.length].id, true); });
 for (const id of ['close-hood', 'back-to-chart']) $(id).addEventListener('click', () => $('hood').close());
@@ -322,7 +339,7 @@ $('hood').addEventListener('click', e => {
   const r = $('hood').getBoundingClientRect();
   if (e.target === $('hood') && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)) $('hood').close();
 });
-matchMedia('(max-width: 700px)').addEventListener('change', () => { if (result) drawChart(result.results.find(r => r.id === settings.focus)); });
+matchMedia('(max-width: 700px)').addEventListener('change', redraw);
 $('remember').addEventListener('change', e => {
   saved = e.target.checked;
   if (saved) persist(); else { try { localStorage.removeItem(STORAGE); } catch { /* Unavailable storage is non-fatal. */ } }
@@ -341,5 +358,6 @@ $('share').addEventListener('click', () => {
   $('status').textContent = 'Scenario link created. It contains the financial inputs; copy and share it only intentionally.';
 });
 $('print').addEventListener('click', () => window.print());
-window.addEventListener('error', event => fail(event.error || event.message));
+// Unattributed/browser-injected window errors do not prove that our calculation failed.
+// Calculation and rendering failures are handled at their own boundaries above.
 queue();

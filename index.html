@@ -9,8 +9,8 @@
   <meta name="referrer" content="no-referrer">
   <title>The Long View · RRSP & TFSA lab</title>
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css?v=1.1.0">
-  <script type="module" src="./app.js?v=1.1.0"></script>
+  <link rel="stylesheet" href="./styles.css?v=1.1.1">
+  <script type="module" src="./app.js?v=1.1.1"></script>
 </head>
 <body>
 <a class="skip" href="#results">Skip to the chart</a>
@@ -24,7 +24,8 @@
     <button type="button" id="scenario-summary" class="context-button" data-hood="starting" aria-label="Review or change the scenario assumptions">Age 36 → 72 · $7,000/year · VGRO <span aria-hidden="true">↗</span></button>
   </section>
   <noscript><p class="notice">This calculator needs JavaScript. No financial information is submitted to a server.</p></noscript>
-  <div id="load-error" class="notice" hidden></div>
+  <div id="load-error" class="notice" role="alert" hidden><p>This scenario couldn’t be calculated. Earlier results are hidden. Your inputs are unchanged.</p><button type="button" id="retry-calculation" class="secondary-button">Try again</button></div>
+  <p id="calculation-progress" class="calculation-progress" role="status" hidden>Preparing your illustration…</p>
   <section class="results" id="results" tabindex="-1" aria-label="Visual scenario comparison">
     <div class="story-panel">
       <nav id="walkthrough" class="walkthrough" aria-label="Walk through five saving choices"></nav>

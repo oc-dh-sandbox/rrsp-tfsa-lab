@@ -12,6 +12,12 @@ All editable assumptions live in a native **Under the hood** drawer, with expand
 
 This release changes presentation, not `model.js`, `tax.js` or `worker.js`. All financial defaults are unchanged. Fresh visitors start on the TFSA reference step; existing saved/shared scenario inputs and selected routes are preserved. The storage format is unchanged.
 
+## Calculation recovery (v1.1.1)
+
+Only errors from the calculator or its rendering can invalidate its results. An opaque or unrelated `window` script error is not treated as proof that a completed calculation failed. The original phone screenshot showed a completed chart with a generic “Script error” banner; injecting an unrelated event reproduced that misleading banner. The original native event’s source is unknown.
+
+Unsupported, blocked, crashed, unreadable or unresponsive workers fall back to the same local model with all 2,000 seeded paths, without changing inputs. Worker results/errors are owned by one calculation, canceled work cannot overwrite newer results, and settled workers are terminated. Genuine model/render failures hide earlier results, disable exports/sharing, and offer **Try again** without clearing saved settings. Financial model, tax and worker calculation code are unchanged.
+
 ## What it compares
 
 All five routes receive the **same personal cash budget**, starting balances, constant investment exposure and paired random market returns:
@@ -56,7 +62,7 @@ For post-publication browser checks of the actual site, set `SITE_URL` to the Pa
 
 ## Files / publication
 
-Runtime files: `index.html`, `styles.css`, `app.js`, `worker.js`, `model.js`, `tax.js`, `data.js`, `icon.svg`, `.nojekyll`. No build step; relative asset paths work under a GitHub Pages project subdirectory. Pages serves the root of `main`. GitHub Actions runs the same full container suite independently.
+Runtime files: `index.html`, `styles.css`, `app.js`, `calculation-runner.js`, `worker.js`, `model.js`, `tax.js`, `data.js`, `icon.svg`, `.nojekyll`. No build step; relative asset paths work under a GitHub Pages project subdirectory. Pages serves the root of `main`. GitHub Actions runs the same full container suite independently.
 
 Editing inputs is ephemeral unless the visitor opts into local storage. A generated sharing link contains the scenario in its URL **fragment**, not a query; the hosting request does not include the fragment, but anyone given the link can read it. CSV export contains the selected assumptions. Normal hosting access logs still exist. Reset clears this application's saved scenario only.
 

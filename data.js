@@ -1,4 +1,4 @@
-export const VERSION = '1.1.0';
+export const VERSION = '1.1.1';
 export const REVIEWED = '2026-10-01';
 export const PORTFOLIOS = [
   { id: 'VEQT', name: 'All equity', equity: 1, growth: 6, volatility: 18, style: 'Highest equity risk', mer: .22, url: 'https://www.vanguard.ca/en/product/etf/asset-allocation/9692/vanguard-all-equity-etf-portfolio' },

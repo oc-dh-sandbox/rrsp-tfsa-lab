@@ -2,7 +2,11 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { mkdir, readFile } from 'node:fs/promises';
 import { calculate, DEFAULTS } from '../../model.js';
-const ready = page => expect(page.locator('#results')).toHaveAttribute('aria-busy', 'false');
+const ready = async page => {
+  await expect(page.locator('#results')).toHaveAttribute('data-calculation-state', 'ready');
+  await expect(page.locator('#results')).toHaveAttribute('aria-busy', 'false');
+  await expect(page.locator('#load-error')).toBeHidden();
+};
 const dollar = n => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
 async function openHood(page, section = 'starting') {
   if (!(await page.locator('#hood').isVisible())) await page.locator('.hood-button').click();
