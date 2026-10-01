@@ -1,4 +1,4 @@
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.0';
 export const REVIEWED = '2026-10-01';
 export const PORTFOLIOS = [
   { id: 'VEQT', name: 'All equity', equity: 1, growth: 6, volatility: 18, style: 'Highest equity risk', mer: .22, url: 'https://www.vanguard.ca/en/product/etf/asset-allocation/9692/vanguard-all-equity-etf-portfolio' },
@@ -24,7 +24,7 @@ export const DEFAULTS = {
   initialTFSA: 0, initialSun: 0, initialWS: 0,
   transfer: 'never', transferFee: 0,
   shock: false, shockAge: 60, stockShock: -40, bondShock: -5,
-  real: true, afterTax: true, focus: 'hybrid', seed: 20261001
+  real: true, afterTax: true, focus: 'tfsa', seed: 20261001
 };
 export const BOUNDS = {
   age: [18, 70], stopAge: [18, 71], salary: [0, 500000], budget: [0, 100000],
