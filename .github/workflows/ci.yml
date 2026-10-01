@@ -1,0 +1,17 @@
+name: Exact-tree validation
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Build pinned browser test container
+        run: docker build --label "org.opencontainers.image.revision=$GITHUB_SHA" -t long-view-ci .
+      - name: Run all unit, finance and desktop/mobile browser tests
+        run: docker run --rm --ipc=host long-view-ci
