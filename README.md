@@ -4,6 +4,14 @@ A static, browser-only educational comparison of employer-matched Sun Life group
 
 **Site:** https://oc-dh-sandbox.github.io/rrsp-tfsa-lab/
 
+## Visual-first walkthrough (v1.1.0)
+
+The first screen is the growth chart, not a financial form. Walk through five routes with numbered steps and Previous/Next; each step highlights its growth versus the TFSA reference, the age-72 outcome, and where first-year contributions go. A separate fee bar chart and five-route comparison make the tradeoffs visible. “Show market swings” reveals the existing simulated range on demand.
+
+All editable assumptions live in a native **Under the hood** drawer, with expandable groups and a live outcome preview. Tax worksheets, detailed tables and full research remain available in closed **Go deeper** and **Sources & how it works** panels. Dollar basis and tax-reserve assumptions stay beside the main visuals; conditional cash/transfer/shock notes still surface when relevant.
+
+This release changes presentation, not `model.js`, `tax.js` or `worker.js`. All financial defaults are unchanged. Fresh visitors start on the TFSA reference step; existing saved/shared scenario inputs and selected routes are preserved. The storage format is unchanged.
+
 ## What it compares
 
 All five routes receive the **same personal cash budget**, starting balances, constant investment exposure and paired random market returns:
@@ -42,7 +50,7 @@ Before pushing a release, commit the intended files and run on the **clean exact
 bash scripts/ci-local.sh
 ```
 
-This archives `HEAD`, not an arbitrary worktree, and uses a digest-pinned Playwright container and lockfile. It tests tax fixtures, contribution conservation and room, refund timing, Monte Carlo determinism, common random paths, fee counterfactuals, transfers, input bounds, local-only persistence, link sharing, CSV export, responsive layout and automated WCAG checks. Screenshots and the verified commit identifier stay in ignored `.artifacts/`.
+This archives `HEAD`, not an arbitrary worktree, and uses a digest-pinned Playwright container and lockfile. It tests tax fixtures, contribution conservation and room, refund timing, Monte Carlo determinism, common random paths, fee counterfactuals, transfers, input bounds, local-only persistence, link sharing, CSV export, first-viewport chart visibility, all walkthrough steps, drawer focus/keyboard behavior, responsive layout and automated WCAG checks. Screenshots and the verified commit identifier stay in ignored `.artifacts/`.
 
 For post-publication browser checks of the actual site, set `SITE_URL` to the Pages root (with trailing `/`) when invoking the browser tests in the container. Verify runtime file SHA-256 identities separately. Local browser and automated accessibility tests do not establish physical-device acceptance or the accuracy of a person's actual employer plan.
 

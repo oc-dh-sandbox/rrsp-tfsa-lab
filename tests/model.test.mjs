@@ -14,6 +14,13 @@ test('defaults use 36 → 72, same budget and same mix for every route', () => {
   assert.ok(PORTFOLIOS.every(p => p.mer === .22));
   assert.deepEqual(PORTFOLIOS.map(p => p.equity), [1,.8,.6,.4,.2]);
 });
+test('visual-first release preserves the five published v1.0 financial outcomes', () => {
+  const result = calculate(DEFAULTS, {paths:20});
+  const previous = [382083.73283634754, 407716.5518836461, 443825.8244263912, 395706.0196663182, 449097.8732297548];
+  result.results.forEach((r, i) => near(r.final, previous[i]));
+  const otherFocus = calculate({...DEFAULTS, focus:'hybridRRSP'}, {paths:20});
+  assert.deepEqual(result.results, otherFocus.results);
+});
 test('first-year contribution routes and employer match are auditable', () => {
   const expected = { tfsa:[0,0,7000,0], sun:[11000,0,0,0], hybrid:[8000,0,3000,0], rrsp:[0,7000,0,0], hybridRRSP:[8000,3000,0,0] };
   for (const [id, deposits] of Object.entries(expected)) assert.deepEqual(contributionPlan(DEFAULTS,route(id))[0].deposits,deposits);
